@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+compat="$PGE_COMPAT_DIR"
+slug="GloriousEggroll/proton-ge-custom"
+version="0.1.0"
+
+get_latest(){
+    local url="https://api.github.com/repos/$slug/releases?per_page=1"
+    curl -s "$url" | jq -r '.[] .tag_name'
+}
+get_current(){
+    ls -1 $compat | sort -V | grep GE | tail -n1
+}
+dl(){
+    local tb="$(get_latest).tar.gz"
+    local dl="https://github.com/$slug/releases/download/$latest/$tb"
+    wget $dl -O $compat/$tb &&
+    tar xvf $compat/$tb -C $compat
+    rm $compat/$tb
+}
+info(){
+    local current=$(get_current)
+    local latest=$(get_latest)
+    echo "PGE version: $version"
+    echo -e "Current:     $current"
+    echo -e "Latest:      $latest"
+}
+update(){
+    local current=$(get_current)
+    local latest=$(get_latest)
+    if [[ $latest == $current ]]; then
+	    echo "Up to date"
+    else
+	    dl
+    fi
+}
+list(){
+    ls -1 $compat | sort -V | grep GE
+}
+usage(){
+	cat <<- EOF
+
+	    USAGE: pge <mode>
+	 
+	    info	print version info
+	    list	list installed Proton-GE versions
+	    update	download latest Proton-GE
+	    jump	jump to compat tools dir
+	    remove	list versions and remove version at the numbered index
+
+	EOF
+}
+jump(){
+    cd "$compat"
+    $SHELL
+}
+remove(){
+    readarray -t vers < <(ls -1 $compat | sort -V | grep GE)
+    for ((i=0;i<${#vers[@]};i++)); do
+	    printf "%i  %s\n" $i "${vers[$i]}"
+    done
+    read -p "Remove index: " choice
+    read -p "Remove '$compat/${vers[$choice]}'? [Y/n] " resp
+    case $resp in
+	    y|Y) rm -rf "$compat/${vers[$choice]}"
+		    ;;
+	    n|N) exit 0
+		    ;;
+    esac
+}
+
+[[ -z $PGE_COMPAT_DIR ]] && { echo "PGE_COMPAT_DIR not set"; exit 1; }
+[[ $# -lt 1 ]] && { usage; exit 1; }
+
+if [[ $(type -t $1) == function ]]; then
+	$1
+else
+	usage
+fi
