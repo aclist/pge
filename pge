@@ -1,14 +1,24 @@
 #!/usr/bin/env bash
 compat="$PGE_COMPAT_DIR"
 slug="GloriousEggroll/proton-ge-custom"
-version="0.1.0"
+version="0.1.1"
 
 get_latest(){
     local url="https://api.github.com/repos/$slug/releases?per_page=1"
     curl -s "$url" | jq -r '.[] .tag_name'
 }
+news(){
+    local url="https://api.github.com/repos/$slug/releases?per_page=1"
+    local id=$(curl -s "$url" | jq -r '.[] .id')
+    local news_url="https://api.github.com/repos/$slug/releases/$id"
+    local res=$(curl -s "$news_url")
+    echo
+    <<< $res jq -r '.tag_name'
+    <<< $res jq -r '.body'
+    echo
+}
 get_current(){
-    ls -1 $compat | sort -V | grep GE | tail -n1
+    ls -1 $compat | sort -V | grep GE-Proton | tail -n1
 }
 dl(){
     local tb="$(get_latest).tar.gz"
@@ -23,12 +33,28 @@ info(){
     echo "PGE version: $version"
     echo -e "Current:     $current"
     echo -e "Latest:      $latest"
+    if [[ $current != $latest ]]; then
+        while true; do
+            read -p "Local version out of date. Fetch latest? [Y/n] " resp
+            case $resp in
+                ""|y|Y)
+                    update
+                    ;;
+                n|N)
+                    exit 0
+                    ;;
+                *)
+                    continue
+                    ;;
+            esac
+        done
+    fi
 }
 update(){
     local current=$(get_current)
     local latest=$(get_latest)
     if [[ $latest == $current ]]; then
-	    echo "Up to date"
+        echo "Already up to date ($latest)"
     else
 	    dl
     fi
@@ -41,11 +67,12 @@ usage(){
 
 	    USAGE: pge <mode>
 	 
-	    info	print version info
+	    info	list version info
 	    list	list installed Proton-GE versions
 	    update	download latest Proton-GE
 	    jump	jump to compat tools dir
-	    remove	list versions and remove version at the numbered index
+	    news	get latest release notes
+	    remove	remove compat tool by index
 
 	EOF
 }
@@ -54,18 +81,33 @@ jump(){
     $SHELL
 }
 remove(){
-    readarray -t vers < <(ls -1 $compat | sort -V | grep GE)
+    readarray -t vers < <(list)
     for ((i=0;i<${#vers[@]};i++)); do
 	    printf "%i  %s\n" $i "${vers[$i]}"
     done
-    read -p "Remove index: " choice
-    read -p "Remove '$compat/${vers[$choice]}'? [Y/n] " resp
-    case $resp in
-	    y|Y) rm -rf "$compat/${vers[$choice]}"
-		    ;;
-	    n|N) exit 0
-		    ;;
-    esac
+    while true; do
+        read -p "Remove index: " choice
+        [[ -z $choice ]] && continue
+        [[ ! $choice =~ ^[0-9]+$ ]] && continue
+        [[ $choice -gt $((${#vers[@]}-1)) ]] && continue
+        while true; do
+                read -p "Remove '$compat/${vers[$choice]}'? [Y/n] " resp
+                case $resp in
+                ""|y|Y)
+                    rm -rf "$compat/${vers[$choice]}"
+                    echo "Removed ${vers[$choice]}"
+                    exit 0
+                    ;;
+                n|N)
+                    exit 0
+                    ;;
+                *)
+                    continue
+                    ;;
+                esac
+        done
+        break
+	done
 }
 
 [[ -z $PGE_COMPAT_DIR ]] && { echo "PGE_COMPAT_DIR not set"; exit 1; }
