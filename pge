@@ -27,6 +27,15 @@ dl(){
     tar xvf $compat/$tb -C $compat
     rm $compat/$tb
 }
+notify(){
+    local current=$(get_current)
+    local latest=$(get_latest)
+    if [[ $current != $latest ]]; then
+        echo "$latest"
+        exit 1
+    fi
+    exit 0
+}
 info(){
     local current=$(get_current)
     local latest=$(get_latest)
@@ -66,12 +75,13 @@ usage(){
 	cat <<- EOF
 
 	    USAGE: pge <mode>
-	 
+	    
 	    info	list version info
 	    list	list installed Proton-GE versions
 	    update	download latest Proton-GE
 	    jump	jump to compat tools dir
 	    news	get latest release notes
+    notify      print if upstream PGE has updates
 	    remove	remove compat tool by index
 
 	EOF

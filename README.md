@@ -15,6 +15,9 @@ On most environments, this defaults to: `$HOME/.local/share/Steam/compatibilityt
 - update: download and unpack latest Proton-GE
 - jump: jump to compat tools dir
 - news: get latest release notes
+- notify: print if upstream PGE has updates (for use in cronjobs/monitors)
+    Silently returns 0 if up to date
+    Returns 1 and version number if upstream is newer
 - remove: list versions and remove version at the numbered index
 
 3. Invoke `pge` with no arguments to print the usage instructions and the above list of commands.
