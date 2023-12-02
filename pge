@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 compat="$PGE_COMPAT_DIR"
 slug="GloriousEggroll/proton-ge-custom"
-version="0.1.1"
+version="0.2.0"
 
 get_latest(){
     local url="https://api.github.com/repos/$slug/releases?per_page=1"
