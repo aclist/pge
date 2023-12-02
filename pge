@@ -47,7 +47,8 @@ info(){
             read -p "Local version out of date. Fetch latest? [Y/n] " resp
             case $resp in
                 ""|y|Y)
-                    update
+                    update &&
+                    exit 0
                     ;;
                 n|N)
                     exit 0
