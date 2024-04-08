@@ -2,6 +2,7 @@
 compat="$PGE_COMPAT_DIR"
 slug="GloriousEggroll/proton-ge-custom"
 version="0.3.0"
+tool="pge"
 
 get_latest(){
     local url="https://api.github.com/repos/$slug/releases?per_page=1"
@@ -72,21 +73,30 @@ list(){
     ls -1 $compat | sort -V | grep GE
 }
 usage(){
-	cat <<- EOF
+    local pge="Proton-GE"
 
-	    USAGE: pge <mode>
-	
-	    info	list Proton-GE version info
-	    list	list installed Proton-GE versions
-	    update	download latest Proton-GE
-	    jump	jump to compat tools dir
-	    news	get latest release notes
-    notify      print if upstream PGE has updates
-	    remove	remove compat tool by index
+    declare -A usage
+    local arrname="usage"
+    usage["info"]="list $pge version info"
+    usage["list"]="list installed $pge versions"
+    usage["update"]="download latest $pge"
+    usage["jump"]="jump to compat tool dir"
+    usage["news"]="get latest release notes"
+    usage["notify"]="returns 1 if upstream $pge is newer"
+    usage["remove"]="remove compat tool by index"
+    usage["-v"]="list tool version"
 
-    -v      	list tool version
-
-	EOF
+    local -n usage_arr="$arrname"
+    longest=$(printf "%s\n" "${!usage_arr[@]}" | sort | tail -n1)
+    wc=$(<<< "$longest" wc -m)
+    offset=$((wc + 4))
+    echo ""
+    printf "\tUSAGE: %s <mode>\n" "$tool"
+    echo ""
+    for i in ${!usage_arr[@]}; do
+        printf "\t%-${offset}s %s\n" "$i" "${usage_arr[$i]}"
+    done | sort
+    echo ""
 }
 jump(){
     cd "$compat"
