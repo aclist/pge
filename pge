@@ -39,7 +39,6 @@ notify(){
 info(){
     local current=$(get_current)
     local latest=$(get_latest)
-    echo "PGE version: $version"
     echo -e "Current:     $current"
     echo -e "Latest:      $latest"
     if [[ $current != $latest ]]; then
@@ -66,7 +65,7 @@ update(){
     if [[ $latest == $current ]]; then
         echo "Already up to date ($latest)"
     else
-	    dl
+        dl
     fi
 }
 list(){
@@ -76,14 +75,16 @@ usage(){
 	cat <<- EOF
 
 	    USAGE: pge <mode>
-	    
-	    info	list version info
+	
+	    info	list Proton-GE version info
 	    list	list installed Proton-GE versions
 	    update	download latest Proton-GE
 	    jump	jump to compat tools dir
 	    news	get latest release notes
     notify      print if upstream PGE has updates
 	    remove	remove compat tool by index
+
+    -v      	list tool version
 
 	EOF
 }
@@ -94,7 +95,7 @@ jump(){
 remove(){
     readarray -t vers < <(list)
     for ((i=0;i<${#vers[@]};i++)); do
-	    printf "%i  %s\n" $i "${vers[$i]}"
+        printf "%i  %s\n" $i "${vers[$i]}"
     done
     while true; do
         read -p "Remove index: " choice
@@ -102,8 +103,8 @@ remove(){
         [[ ! $choice =~ ^[0-9]+$ ]] && continue
         [[ $choice -gt $((${#vers[@]}-1)) ]] && continue
         while true; do
-                read -p "Remove '$compat/${vers[$choice]}'? [Y/n] " resp
-                case $resp in
+            read -p "Remove '$compat/${vers[$choice]}'? [Y/n] " resp
+            case $resp in
                 ""|y|Y)
                     rm -rf "$compat/${vers[$choice]}"
                     echo "Removed ${vers[$choice]}"
@@ -115,17 +116,22 @@ remove(){
                 *)
                     continue
                     ;;
-                esac
+            esac
         done
         break
-	done
+    done
+}
+
+version(){
+    echo "PGE $version"
 }
 
 [[ -z $PGE_COMPAT_DIR ]] && { echo "PGE_COMPAT_DIR not set"; exit 1; }
 [[ $# -lt 1 ]] && { usage; exit 1; }
+[[ $1 == "-v" ]] && { version; exit 0; }
 
 if [[ $(type -t $1) == function ]]; then
-	$1
+    $1
 else
-	usage
+    usage
 fi
