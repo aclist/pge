@@ -6,7 +6,8 @@ tool="pge"
 
 get_latest(){
     local url="https://api.github.com/repos/$slug/releases?per_page=1"
-    curl -s "$url" | jq -r '.[] .tag_name'
+    curl -s "$url" > /tmp/pge
+    < /tmp/pge jq -r '.[] .tag_name'
 }
 news(){
     local url="https://api.github.com/repos/$slug/releases?per_page=1"
@@ -24,6 +25,12 @@ get_current(){
 dl(){
     local tb="$(get_latest).tar.gz"
     local dl="https://github.com/$slug/releases/download/$latest/$tb"
+    local size=$(< /tmp/pge jq '.[].assets[1].size')
+    local avail=$(df -B1 $PGE_COMPAT_DIR --output=avail | awk 'END{print $1=$1}')
+    if [[ $size > $avail ]]; then
+        echo "Not enough space available on disk"
+        exit 1
+    fi
     wget $dl -O $compat/$tb &&
     tar xvf $compat/$tb -C $compat
     rm $compat/$tb
